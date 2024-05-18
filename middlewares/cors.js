@@ -1,7 +1,7 @@
 const allowedCors = [
   "https://practicum.yandex.ru",
   "https://students-projects.ru",
-  "https://pindie-frontend.nomoredomainswork.ru"
+  "https://pindie-serfly.nomoredomainswork.ru"
 ];
 
 function cors(req, res, next) {
