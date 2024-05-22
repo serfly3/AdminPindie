@@ -119,6 +119,7 @@ const findGameById = async (req, res, next) => {
       .findById(req.params.id) // Поиск записи по id
       .populate("categories") // Загрузка связанных записей о категориях
       .populate("users"); // Загрузка связанных записей о пользователях
+    console.log('findGameById')
     next(); // Передаём управление в следующую функцию
   } catch (error) {
     // На случай ошибки вернём статус-код 404 с сообщением, что игра не найдена
@@ -130,6 +131,7 @@ const updateGame = async (req, res, next) => {
   try {
     // В метод передаём id из параметров запроса и объект с новыми свойствами
     req.game = await games.findByIdAndUpdate(req.params.id, req.body);
+    console.log('updateGame')
     next();
   } catch (error) {
     res.status(400).send({ message: "Ошибка обновления игры" });
@@ -147,6 +149,11 @@ const deleteGame = async (req, res, next) => {
 };
 
 const checkEmptyFields = async (req, res, next) => {
+  if (req.isVoteRequest) {
+    console.log('checkEmptyFields')
+    next();
+    return;
+  }
   if (
     !req.body.title ||
     !req.body.description ||
@@ -154,51 +161,49 @@ const checkEmptyFields = async (req, res, next) => {
     !req.body.link ||
     !req.body.developer
   ) {
-    // Если какое-то из полей отсутствует, то не будем обрабатывать запрос дальше,
-    // а ответим кодом 400 — данные неверны.
     res.setHeader("Content-Type", "application/json");
     res.status(400).send(JSON.stringify({ message: "Заполни все поля" }));
   } else {
-    // Если всё в порядке, то передадим управление следующим миддлварам
+    console.log('checkEmptyFields')
     next();
   }
 };
 
 const checkIfCategoriesAvaliable = async (req, res, next) => {
-  // Проверяем наличие жанра у игры
+  if (req.isVoteRequest) {
+    console.log('checkIfCategoriesAvaliable')
+    next();
+    return;
+  }
   if (!req.body.categories || req.body.categories.length === 0) {
     res.setHeader("Content-Type", "application/json");
     res
       .status(400)
       .send(JSON.stringify({ message: "Выбери хотя бы одну категорию" }));
   } else {
+    console.log('checkIfCategoriesAvaliable')
     next();
   }
 };
 
 const checkIfUsersAreSafe = async (req, res, next) => {
-  // Проверим, есть ли users в теле запроса
+  console.log(req.body.users);
   if (!req.body.users) {
+    console.log('checkIfUsersAreSafe')
     next();
     return;
   }
-  // Cверим, на сколько изменился массив пользователей в запросе
-  // с актуальным значением пользователей в объекте game
-  // Если больше чем на единицу, вернём статус ошибки 400 с сообщением
   if (req.body.users.length - 1 === req.game.users.length) {
+    console.log('checkIfUsersAreSafe')
     next();
     return;
   } else {
-    res.setHeader("Content-Type", "application/json");
-    res.status(400).send(
-      JSON.stringify({
-        message:
-          "Нельзя удалять пользователей или добавлять больше одного пользователя",
-      })
-    );
+    res.status(400).send({
+      message:
+        "Нельзя удалять пользователей или добавлять больше одного пользователя",
+    });
   }
 };
-
 const checkIsGameExists = async (req, res, next) => {
   const isInArray = req.gamesArray.find((game) => {
     return req.body.title === game.title;
@@ -219,10 +224,7 @@ const checkIsVoteRequest = async (req, res, next) => {
   if (Object.keys(req.body).length === 1 && req.body.users) {
     req.isVoteRequest = true;
   }
-  if (req.isVoteRequest) {
-    next();
-    return;
-  }
+  console.log('checkIsVoteRequest')
   next();
 };
 
